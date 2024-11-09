@@ -23,7 +23,7 @@ object TSVReader extends UMLClassDiagramReader:
   enum EnumerationValuesHeader:
     case Enumeration, Name, Curie, Definition
 
-  private def parseClasses(maybeTsvFile: Option[File], ontologyPrefix: PrefixNamespace): UMLClasses =
+  private def parseClasses(maybeTsvFile: Option[File], ontologyPrefix: PrefixNamespace): UMLClassesMap =
     import ClassesHeader.*
     val logger = Logger("parseClasses")
     logger.info("Start")
@@ -68,11 +68,11 @@ object TSVReader extends UMLClassDiagramReader:
     val umlClassesByNamedElement = umlClasses.map(umlClass => (umlClass.classIdentity.classNamedElement, umlClass)).toMap
     logger.trace(s"umlClassesByNamedElement = $umlClassesByNamedElement")
     logger.info("Done")
-    UMLClasses(umlClassesByNamedElement)
+    UMLClassesMap(umlClassesByNamedElement)
   end parseClasses
 
 
-  private def parseAttributes(maybeTsvFile: Option[File], ontologyPrefix: PrefixNamespace): UMLClassAttributes =
+  private def parseAttributes(maybeTsvFile: Option[File], ontologyPrefix: PrefixNamespace): UMLClassAttributesMap =
     import ClassAttributesHeader.*
     val logger = Logger("TsvReader: parseAttributes")
     implicit object TsvFormat extends TSVFormat {}
@@ -110,10 +110,10 @@ object TSVReader extends UMLClassDiagramReader:
     val umlClassAttributesById = umlClassAttributes.map(umlClassAttribute => (umlClassAttribute.attributeIdentity.attributeNamedElement, umlClassAttribute)).toMap
     logger.trace(s"umlClassAttributesById = $umlClassAttributesById")
     logger.info("Done")
-    UMLClassAttributes(umlClassAttributesById)
+    UMLClassAttributesMap(umlClassAttributesById)
   end parseAttributes
 
-  private def parseEnumerations(maybeTsvFile: Option[File], ontologyPrefix: PrefixNamespace): UMLEnumerations =
+  private def parseEnumerations(maybeTsvFile: Option[File], ontologyPrefix: PrefixNamespace): UMLEnumerationsMap =
     import EnumerationsHeader.*
     val logger = Logger("parseEnumerations")
     logger.info("Start")
@@ -149,10 +149,10 @@ object TSVReader extends UMLClassDiagramReader:
       umlEnumeration => (umlEnumeration.enumerationIdentity.enumerationNamedElement, umlEnumeration)).toMap
     logger.trace(s"umlEnumerationByNamedElement = $umlEnumerationByNamedElement")
     logger.info("Done")
-    UMLEnumerations(umlEnumerationByNamedElement)
+    UMLEnumerationsMap(umlEnumerationByNamedElement)
   end parseEnumerations
 
-  private def parseEnumerationValues(maybeTsvFile: Option[File], ontologyPrefix: PrefixNamespace): UMLEnumerationValues =
+  private def parseEnumerationValues(maybeTsvFile: Option[File], ontologyPrefix: PrefixNamespace): UMLEnumerationValuesMap =
     import EnumerationValuesHeader.*
     val logger = Logger("parseEnumerationValues")
     implicit object TsvFormat extends TSVFormat {}
@@ -188,22 +188,24 @@ object TSVReader extends UMLClassDiagramReader:
           umlEnumerationValues += umlEnumerationValue
       })
       reader.close()
-      val umlEnumerationValuesById = umlEnumerationValues.map(umlEnumerationValue => (umlEnumerationValue.valueIdentity.valueNamedElement, umlEnumerationValue)).toMap
+      val umlEnumerationValuesById = umlEnumerationValues.map(umlEnumerationValue =>
+        (umlEnumerationValue.valueIdentity.valueNamedElement, umlEnumerationValue)).toMap
       logger.trace(s"umlEnumerationValuesById = $umlEnumerationValuesById")
       logger.info("Done")
-      UMLEnumerationValues(umlEnumerationValuesById)
+      UMLEnumerationValuesMap(umlEnumerationValuesById)
     }
     else
-      UMLEnumerationValues(scala.collection.immutable.HashMap[UMLEnumerationValueNamedElement, UMLEnumerationValue]())
+      UMLEnumerationValuesMap(scala.collection.immutable.HashMap[UMLEnumerationValueNamedElement, UMLEnumerationValue]())
   end parseEnumerationValues
 
   def parseUMLClassDiagram(input: InputParameters): Option[UMLClassDiagram] =
-    val umlClasses = parseClasses(input.classesTsv, PrefixNamespace(input.ontologyPrefix))
+    val ontologyPrefixNamespace = PrefixNamespace(input.ontologyPrefix);
+    val umlClasses = parseClasses(input.classesTsv, ontologyPrefixNamespace)
     if umlClasses.umlClasses.isEmpty then
       return None
-    val umlEnumerations = parseEnumerations(input.enumerationsTsv, PrefixNamespace(input.ontologyPrefix))
-    val umlAttributes = parseAttributes(input.attributesTsv, PrefixNamespace(input.ontologyPrefix))
-    val umlEnumerationValues = parseEnumerationValues(input.enumerationValuesTsv, PrefixNamespace(input.ontologyPrefix))
+    val umlEnumerations = parseEnumerations(input.enumerationsTsv, ontologyPrefixNamespace)
+    val umlAttributes = parseAttributes(input.attributesTsv, ontologyPrefixNamespace)
+    val umlEnumerationValues = parseEnumerationValues(input.enumerationValuesTsv, ontologyPrefixNamespace)
 
     Some(UMLClassDiagram(
       input.owlOntologyFile.get,

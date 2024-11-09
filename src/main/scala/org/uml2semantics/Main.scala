@@ -100,12 +100,12 @@ val argParser =
       else
         TSVReader.parseUMLClassDiagram(input)
 
-      val owlWriter = new UML2OWLWriter(umlClassDiagram.get)
-      owlWriter.generateOWL match
-        case Left(exceptionMsg) => println(s"An exception occurred:$exceptionMsg")
-        case Right(warnings) =>
-          if warnings.nonEmpty then
-            logger.warn("During processing of the UMLClassdiagram the following potential problem were found ${Code.sourceDetail}:")
-            warnings.foreach(w => println(s"$w"))
+//      val owlWriter = new UML2OWLWriter(umlClassDiagram.get)
+//      owlWriter.generateOWL match
+//        case Left(exceptionMsg) => println(s"An exception occurred:$exceptionMsg")
+//        case Right(warnings) =>
+//          if warnings.nonEmpty then
+//            logger.warn("During processing of the UMLClassdiagram the following potential problem were found ${Code.sourceDetail}:")
+//            warnings.foreach(w => println(s"$w"))
     case _ => logger.error("Unexpected case ${Code.sourceDetail}")
   logger.info("Done")

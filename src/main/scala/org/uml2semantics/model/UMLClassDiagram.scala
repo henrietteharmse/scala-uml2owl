@@ -252,13 +252,13 @@ object UMLClassParentNamedElements:
       .map(m => UMLClassIdentity.findClassNamedElement(m).get.classNamedElement)
     new UMLClassParentNamedElements(setOfParentUncertainClassNamedElements)
 
-case class UMLClasses(umlClasses: Map[UMLClassNamedElement, UMLClass])
+case class UMLClassesMap(umlClasses: Map[UMLClassNamedElement, UMLClass])
 
-case class UMLClassAttributes(umlClassAttributes: Map[UMLClassAttributeNamedElement, UMLClassAttribute])
+case class UMLClassAttributesMap(umlClassAttributes: Map[UMLClassAttributeNamedElement, UMLClassAttribute])
 
-case class UMLEnumerations(umlEnumerations: Map[UMLEnumerationNamedElement, UMLEnumeration])
+case class UMLEnumerationsMap(umlEnumerations: Map[UMLEnumerationNamedElement, UMLEnumeration])
 
-case class UMLEnumerationValues(umlEnumerationValues: Map[UMLEnumerationValueNamedElement, UMLEnumerationValue])
+case class UMLEnumerationValuesMap(umlEnumerationValues: Map[UMLEnumerationValueNamedElement, UMLEnumerationValue])
 
 sealed trait UMLElementIRI:
   val iri: String
@@ -661,10 +661,10 @@ object UMLEnumerationValue:
 case class UMLClassDiagram(owlOntologyFile: File,
                            ontologyIRI: OntologyIRI,
                            ontologyPrefix: PrefixNamespace,
-                           umlClasses: UMLClasses,
-                           umlClassAttributes: UMLClassAttributes,
-                           umlEnumerations: UMLEnumerations,
-                           umlEnumerationValues: UMLEnumerationValues)
+                           umlClasses: UMLClassesMap,
+                           umlClassAttributes: UMLClassAttributesMap,
+                           umlEnumerations: UMLEnumerationsMap,
+                           umlEnumerationValues: UMLEnumerationValuesMap)
 
 
 object UMLClassDiagram:
@@ -672,6 +672,6 @@ object UMLClassDiagram:
 
   def apply(owlOntologyFile: File, ontologyIRI: OntologyIRI, ontologyPrefix: PrefixNamespace): UMLClassDiagram =
     logger.debug(s"owlOntologyFile=$owlOntologyFile, ontologyIRI=$ontologyIRI, ontologyPrefix=$ontologyPrefix ${Code.source}")
-    new UMLClassDiagram(owlOntologyFile, ontologyIRI, ontologyPrefix, UMLClasses(Map()), UMLClassAttributes(Map()),
-      UMLEnumerations(Map()), UMLEnumerationValues(Map()))
+    new UMLClassDiagram(owlOntologyFile, ontologyIRI, ontologyPrefix, UMLClassesMap(Map()), UMLClassAttributesMap(Map()),
+      UMLEnumerationsMap(Map()), UMLEnumerationValuesMap(Map()))
 

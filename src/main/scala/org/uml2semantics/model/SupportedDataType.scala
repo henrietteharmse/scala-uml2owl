@@ -10,6 +10,7 @@ enum SupportedDataType(curie: Curie):
   case `xsd:base64Binary` extends SupportedDataType(Curie("xsd:base64Binary"))
   case `xsd:boolean` extends SupportedDataType(Curie("xsd:boolean"))
   case `xsd:byte` extends SupportedDataType(Curie("xsd:byte"))
+  case `xsd:date` extends SupportedDataType(Curie("xsd:date"))
   case `xsd:dateTime` extends SupportedDataType(Curie("xsd:dateTime"))
   case `xsd:dateTimeStamp` extends SupportedDataType(Curie("xsd:dateTimeStamp"))
   case `xsd:decimal` extends SupportedDataType(Curie("xsd:decimal"))

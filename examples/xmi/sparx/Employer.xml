@@ -200,8 +200,8 @@
 			<element xmi:idref="EAID_DFD18D8E_0C79_43c0_952F_8316E37E3CB3" xmi:type="uml:Class" name="Employee" scope="public">
 				<model package="EAPK_B9F1721C_D9F8_4d15_9DF5_86D534E9291B" tpos="0" ea_localid="6" ea_eleType="element"/>
 				<properties documentation="An employee is someone who does work for an employer for which they get compensated." isSpecification="false" sType="Class" nType="0" scope="public" isRoot="false" isLeaf="false" isAbstract="false" isActive="false"/>
-				<project author="henri" version="1.0" phase="1.0" created="2023-07-24 19:43:41" modified="2024-08-07 18:11:01" complexity="1" status="Proposed"/>
-				<code gentype="Java"/>
+				<project author="henri" version="1.0" phase="1.0" created="2023-07-24 19:43:41" modified="2024-11-08 15:03:33" complexity="1" status="Proposed"/>
+				<code product_name="Java" gentype="Java"/>
 				<style appearance="BackColor=-1;BorderColor=-1;BorderWidth=-1;FontColor=-1;VSwimLanes=1;HSwimLanes=1;BorderStyle=0;"/>
 				<tags/>
 				<xrefs/>
@@ -216,7 +216,7 @@
 			<element xmi:idref="EAID_95F1AD87_96AB_4bf7_91A1_EC5721F8A65F" xmi:type="uml:Class" name="Employer" scope="public">
 				<model package="EAPK_B9F1721C_D9F8_4d15_9DF5_86D534E9291B" tpos="0" ea_localid="7" ea_eleType="element"/>
 				<properties documentation="An employer is someone that employs 1 or more persons." isSpecification="false" sType="Class" nType="0" scope="public" isRoot="false" isLeaf="false" isAbstract="false" isActive="false"/>
-				<project author="henri" version="1.0" phase="1.0" created="2023-07-24 19:44:03" modified="2024-08-07 18:10:09" complexity="1" status="Proposed"/>
+				<project author="henri" version="1.0" phase="1.0" created="2023-07-24 19:44:03" modified="2024-11-08 15:04:26" complexity="1" status="Proposed"/>
 				<code product_name="Java" gentype="Java"/>
 				<style appearance="BackColor=-1;BorderColor=-1;BorderWidth=-1;FontColor=-1;VSwimLanes=1;HSwimLanes=1;BorderStyle=0;"/>
 				<tags/>
@@ -231,8 +231,8 @@
 			<element xmi:idref="EAID_C64147AF_31BF_484d_A408_A97C799E44C7" xmi:type="uml:Class" name="Person" scope="public">
 				<model package="EAPK_B9F1721C_D9F8_4d15_9DF5_86D534E9291B" tpos="0" ea_localid="5" ea_eleType="element"/>
 				<properties documentation="A person is a human being." isSpecification="false" sType="Class" nType="0" scope="public" isRoot="false" isLeaf="false" isAbstract="false" isActive="false"/>
-				<project author="henri" version="1.0" phase="1.0" created="2023-07-24 19:41:42" modified="2024-08-07 17:27:51" complexity="1" status="Proposed"/>
-				<code gentype="Java"/>
+				<project author="henri" version="1.0" phase="1.0" created="2023-07-24 19:41:42" modified="2024-11-08 15:35:30" complexity="1" status="Proposed"/>
+				<code product_name="Java" gentype="Java"/>
 				<style appearance="BackColor=-1;BorderColor=-1;BorderWidth=-1;FontColor=-1;VSwimLanes=1;HSwimLanes=1;BorderStyle=0;"/>
 				<tags/>
 				<xrefs/>
@@ -240,7 +240,7 @@
 				<attributes>
 					<attribute xmi:idref="EAID_154CDC3D_010A_4ccc_BFA4_C194C0C3F812" name="name" scope="Private">
 						<initial/>
-						<documentation/>
+						<documentation value="The given name of the person."/>
 						<model ea_localid="1" ea_guid="{154CDC3D-010A-4ccc-BFA4-C194C0C3F812}"/>
 						<properties type="xsd:string" collection="false" static="0" duplicates="0" changeability="changeable"/>
 						<coords ordered="0"/>
@@ -249,13 +249,13 @@
 						<bounds lower="1" upper="1"/>
 						<options/>
 						<style/>
-						<styleex value="volatile=0;"/>
+						<styleex value="volatile=0;union=0;"/>
 						<tags/>
 						<xrefs/>
 					</attribute>
 					<attribute xmi:idref="EAID_F745E3DD_1656_4174_9760_FAA3EBE4207E" name="surname" scope="Private">
 						<initial/>
-						<documentation/>
+						<documentation value="The family name of the person."/>
 						<model ea_localid="2" ea_guid="{F745E3DD-1656-4174-9760-FAA3EBE4207E}"/>
 						<properties type="xsd:string" collection="false" static="0" duplicates="0" changeability="changeable"/>
 						<coords ordered="0"/>
@@ -264,13 +264,13 @@
 						<bounds lower="1" upper="1"/>
 						<options/>
 						<style/>
-						<styleex value="volatile=0;"/>
+						<styleex value="volatile=0;union=0;"/>
 						<tags/>
 						<xrefs/>
 					</attribute>
 					<attribute xmi:idref="EAID_7BF887BD_CB1E_471e_A5D9_B5552C0EE611" name="dateOfBirth" scope="Private">
 						<initial/>
-						<documentation/>
+						<documentation value="The date on which this person was born."/>
 						<model ea_localid="3" ea_guid="{7BF887BD-CB1E-471e-A5D9-B5552C0EE611}"/>
 						<properties type="xsd:dateTime" collection="false" static="0" duplicates="0" changeability="changeable"/>
 						<coords ordered="0"/>
@@ -279,7 +279,7 @@
 						<bounds lower="1" upper="1"/>
 						<options/>
 						<style/>
-						<styleex value="volatile=0;"/>
+						<styleex value="volatile=0;union=0;"/>
 						<tags/>
 						<xrefs/>
 					</attribute>
