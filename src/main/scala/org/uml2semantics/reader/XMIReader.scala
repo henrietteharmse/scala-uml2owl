@@ -34,6 +34,7 @@ object XMIReader:
     val xmiDocument: Document = builder.parse(input.xmiFile.get)
 
     val classesResult: XMIClassesResult = parseUMLClasses(ontologyPrefix, xPath, xmiDocument)
+    logger.debug(s"classesResult = ${classesResult}")
 
     None
 
@@ -43,10 +44,12 @@ object XMIReader:
 
   private def parseUMLClasses(ontologyPrefix: PrefixNamespace, xPath: XPath, xmiDocument: Document): XMIClassesResult = {
     val UMLClassesQuery: String = "//element[@type='uml:Class']"
-    var umlClassesMap: mutable.Map[UMLClassNamedElement, UMLClass] = mutable.Map()
+    val umlClassesMap: mutable.Map[UMLClassNamedElement, UMLClass] = mutable.Map()
 
     val classNodes: Seq[Node] = executeXPathQuery(xPath, xmiDocument, UMLClassesQuery)
     val DocumentationQuery: String = "properties/@documentation"
+
+    val parentsByClassIdentityMap: mutable.Map[UMLClassIdentity, Set[String]] = mutable.Map()
 
     for classNode <- classNodes do {
       val className: String = classNode.getAttributes.getNamedItem("name").getNodeValue
@@ -55,13 +58,24 @@ object XMIReader:
       val classDefinition = executeXPathQuery(xPath, classNode, DocumentationQuery)
       val parents: Set[String] = extractParents(xPath, xmiDocument, classNode)
 
-      var umlClass: UMLClass = UMLClass(
+      val umlClass: UMLClass = UMLClass(
         UMLClassIdentity(className = umlClassName, ontologyPrefix = ontologyPrefix),
-        UMLClassDefinition(classDefinition),
-        UMLClassParentNamedElements(parents)
+        UMLClassDefinition(classDefinition)//,
+//        UMLClassParentNamedElements(parents)
       )
+      parentsByClassIdentityMap += umlClass.classIdentity -> parents
 
       umlClassesMap += umlClassName -> umlClass
+    }
+
+    for (umlClassName, umlClass) <- umlClassesMap do {
+      val parents = parentsByClassIdentityMap(umlClass.classIdentity)
+      val classParentIds = UMLClassParentNamedElements(parents)
+      // @todo: Here we need to copy parentIds into the UMLClass, because we do not read classes in an order
+      // that will ensure that parent classes are read before their children. We may be better off using a
+      // Builder pattern to ensure instances are created with all necessary data.
+      val updatedUmlClass = umlClass.copy(classParentIds = classParentIds)
+      umlClassesMap.update(umlClassName, updatedUmlClass)
     }
 
     XMIClassesResult(classNodes, UMLClassesMap(umlClassesMap.toMap))
@@ -79,6 +93,8 @@ object XMIReader:
       val parentNodes = executeXPathQuery(xPath, xmiDocument, ParentsByIdrefQuery)
       for parentNode <- parentNodes do
         parents += parentNode.getNodeValue
+
+    logger.debug(s"parents = ${parents}")
     parents.toSet
   }
 

@@ -94,11 +94,13 @@ val argParser =
       PrefixNamespace.cachePrefixes(input.prefixes)
       PrefixNamespace.cachePrefix(input.ontologyPrefix)
 
-      var umlClassDiagram = if input.xmiFile.isDefined 
+      val umlClassDiagram = if input.xmiFile.isDefined
       then
         XMIReader.parseUMLClassDiagram(input)
       else
         TSVReader.parseUMLClassDiagram(input)
+
+      logger.debug(s"umlClassDiagram = $umlClassDiagram ${Code.source}")
 
 //      val owlWriter = new UML2OWLWriter(umlClassDiagram.get)
 //      owlWriter.generateOWL match
