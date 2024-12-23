@@ -16,6 +16,9 @@
 
     <logger name="parseUMLClassDiagramFromXMI" level="trace" />
     <logger name="extractParents" level="trace" />
+    <logger name="extractAttributes" level="trace" />
+    <logger name="### evaluateFunction ###" level="trace" />
+    <logger name="executeXPathQuery" level="trace" />
 
     <!-- org.uml2semantics.model.UMLClassDiagram.scala -->
     <logger name="org.uml2semantics.model.UMLClassCurie" level="error" />

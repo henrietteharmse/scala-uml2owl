@@ -17,7 +17,8 @@ the following xpath should be used: //packagedElement[@type='uml:Class']/@name
 
 #Get types for attribute 'name' of class 'Person'
 //element[@xmi:type='uml:Class' and @name='Person']//attribute[@name='dateOfBirth']/properties/@type
-
+# ---> incode
+//element[@type='uml:Class' and @name='Person']//attribute[@name='dateOfBirth']/properties/@type
 
 #Get associations for class 'Employer'
 #Not working yet

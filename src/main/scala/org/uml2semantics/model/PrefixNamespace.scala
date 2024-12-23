@@ -84,7 +84,7 @@ private val SEPARATOR: String = ":"
 
 case class Curie(curie: String):
   private val logger = Logger[this.type]
-  require(Curie.isCurieBasedOnConfiguredPrefix(curie), s"Curie=$curie is not using a known prefix. To specify prefix, use -x option.")
+  require(Curie.isCurieBasedOnConfiguredPrefix(curie), s"Curie=$curie is not using a known prefix.")
   private val args: Array[String] = curie.split(SEPARATOR)
   val prefixName: PrefixName = PrefixName(args(0))
   logger.debug(s"prefixName=$prefixName ${Code.source}")
