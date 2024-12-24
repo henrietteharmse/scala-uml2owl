@@ -2,11 +2,10 @@ package org.uml2semantics.model
 
 import com.typesafe.scalalogging.Logger
 import org.uml2semantics.inline.Code
-import org.uml2semantics.model.PrefixNamespace.{logger, prefixMap}
+import org.uml2semantics.model.PrefixNamespace.prefixMap
 
-import scala.annotation.targetName
-import scala.collection.{immutable, mutable}
 import scala.collection.mutable.Map
+import scala.collection.{immutable, mutable}
 
 
 case class PrefixName(name: String)
@@ -109,11 +108,26 @@ object Curie:
     logger.debug(s"prefixName=$prefixName, prefixReference=$prefixReference ${Code.source}")
     new Curie(prefixName.name + SEPARATOR + prefixReference.reference)
 
+  def apply(s: String): Curie =
+    logger.debug(s"s=$s ${Code.source}")
+    new Curie(s)
+      
+  def fromString(s: String): Option[Curie] =
+    logger.debug(s"s=$s ${Code.source}")
+    if s.contains(SEPARATOR) && isCurieBasedOnConfiguredPrefix(s) then
+      Some(new Curie(s))
+    else
+      None
+
   def unapply(s: String): Option[Curie] =
     logger.debug(s"s=$s ${Code.source}")
     if isCurieBasedOnConfiguredPrefix(s) then
       Some(Curie(s))
     else None
+
+  def unapply(curie: Curie): Option[(PrefixName, PrefixReference)] =
+    logger.debug(s"curie=$curie ${Code.source}")
+    Some((curie.prefixName, curie.prefixReference))
 
   def isCurieBasedOnConfiguredPrefix(s: String): Boolean =
     logger.debug(s"s=$s ${Code.source}")

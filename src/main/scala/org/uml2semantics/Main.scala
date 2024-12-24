@@ -2,10 +2,11 @@ package org.uml2semantics
 
 import com.typesafe.scalalogging.Logger
 import org.uml2semantics.InputParameters
-import org.uml2semantics.Precedence.XMI
+import org.uml2semantics.Overrides.XMI
 import org.uml2semantics.inline.Code
-import org.uml2semantics.model.{OntologyIRI, PrefixNamespace}
-import org.uml2semantics.reader.{TSVReader, XMIReader}
+import org.uml2semantics.model.PrefixNamespace
+import org.uml2semantics.reader.TSVReader
+//import org.uml2semantics.reader.{TSVReader, XMIReader}
 import org.uml2semantics.owl.UML2OWLWriter
 import scopt.OParser
 
@@ -73,7 +74,13 @@ val argParser =
       .withFallback(() => PrefixNamespace.predefinedPrefixNamespacesAsStrings())
       .valueName("<prefixname:prefix>,<prefixname:prefix>...")
       .action((a, c) => c.copy(prefixes = a))
-      .text("A list of all the prefixes used in the UML class representation separated by commas.")
+      .text("A list of all the prefixes used in the UML class representation separated by commas."),
+    opt[String]("overrides")
+      .valueName("<xmi-overrides-tsv> | <tsv-overrides-xmi>")
+      .action((a, c) => c.copy(overrides = a))
+      .text("Indicates whether the XMI file should be used to override the TSV file or vice versa. " +
+        "If not specified, the TSV file will be used to override the XMI file.")
+
   )
 
 
@@ -90,17 +97,18 @@ val argParser =
   OParser.parse(argParser, arguments, InputParameters()) match
     case Some(input) =>
       logger.debug(s"Some input ${Code.source}")
-
+//
       PrefixNamespace.cachePrefixes(input.prefixes)
       PrefixNamespace.cachePrefix(input.ontologyPrefix)
+      TSVReader.parseUMLClassDiagram(input)
 
-      val umlClassDiagram = if input.xmiFile.isDefined
-      then
-        XMIReader.parseUMLClassDiagram(input)
-      else
-        TSVReader.parseUMLClassDiagram(input)
-
-      logger.debug(s"umlClassDiagram = $umlClassDiagram ${Code.source}")
+//      val umlClassDiagram = if input.xmiFile.isDefined
+//      then
+//        XMIReader.parseUMLClassDiagram(input)
+//      else
+//        TSVReader.parseUMLClassDiagram(input)
+//
+//      logger.debug(s"umlClassDiagram = $umlClassDiagram ${Code.source}")
 
 //      val owlWriter = new UML2OWLWriter(umlClassDiagram.get)
 //      owlWriter.generateOWL match

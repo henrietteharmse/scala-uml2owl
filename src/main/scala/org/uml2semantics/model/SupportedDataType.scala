@@ -2,6 +2,7 @@ package org.uml2semantics.model
 
 import com.typesafe.scalalogging.Logger
 import org.uml2semantics.inline.Code
+import org.uml2semantics.model.Curie
 
 
 enum SupportedDataType(curie: Curie):
