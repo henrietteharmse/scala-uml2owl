@@ -8,12 +8,18 @@ import scala.collection.mutable.Map
 import scala.collection.{immutable, mutable}
 
 
-case class PrefixName(name: String)
+case class PrefixName(name: String):
+  def nonEmpty: Boolean = name.nonEmpty
+  def isEmpty: Boolean = name.isEmpty
 
-case class PrefixIRI(iri: String)
+case class PrefixIRI(iri: String):
+  def nonEmpty: Boolean = iri.nonEmpty
+  def isEmpty: Boolean = iri.isEmpty
 
 case class PrefixNamespace(prefixName: PrefixName, prefixIRI: PrefixIRI):
   private def toSimpleString: String = prefixName.name + ":" + prefixIRI.iri
+  def nonEmpty: Boolean = prefixName.nonEmpty && prefixIRI.iri.nonEmpty
+  def isEmpty: Boolean = prefixName.isEmpty && prefixIRI.isEmpty
 
 object PrefixNamespace:
   private val logger = Logger[this.type]
@@ -95,6 +101,8 @@ case class Curie(curie: String):
     require(PrefixNamespace.getPrefixNamespace(prefixName).nonEmpty, s"Prefix name = '$prefixName' is undefined. Please define it.")
     PrefixNamespace.getPrefixNamespace(prefixName).get.prefixIRI.iri + prefixReference.reference
 
+  def nonEmpty: Boolean = prefixName.nonEmpty && curie.nonEmpty
+  def isEmpty: Boolean = prefixName.isEmpty && curie.isEmpty
 object Curie:
   private val logger = Logger[this.type]
 
@@ -107,10 +115,6 @@ object Curie:
   def apply(prefixName: PrefixName, prefixReference: PrefixReference): Curie =
     logger.debug(s"prefixName=$prefixName, prefixReference=$prefixReference ${Code.source}")
     new Curie(prefixName.name + SEPARATOR + prefixReference.reference)
-
-  def apply(s: String): Curie =
-    logger.debug(s"s=$s ${Code.source}")
-    new Curie(s)
       
   def fromString(s: String): Option[Curie] =
     logger.debug(s"s=$s ${Code.source}")
@@ -118,12 +122,6 @@ object Curie:
       Some(new Curie(s))
     else
       None
-
-  def unapply(s: String): Option[Curie] =
-    logger.debug(s"s=$s ${Code.source}")
-    if isCurieBasedOnConfiguredPrefix(s) then
-      Some(Curie(s))
-    else None
 
   def unapply(curie: Curie): Option[(PrefixName, PrefixReference)] =
     logger.debug(s"curie=$curie ${Code.source}")
