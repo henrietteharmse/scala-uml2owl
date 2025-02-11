@@ -34,33 +34,26 @@ object ClassIdentityBuilderCache:
 
     classIdentity
 
-  def getUMLClassIdentity(className: UMLClassName): Option[UMLClassIdentity] =
-    classIdentityByClassName.get(className)
+  def getUMLClassIdentity(name: String): Option[UMLClassIdentity] =
+    (UMLClassCurie(name), UMLClassName(name)) match
+      case (Some(curie), _) => classIdentityByClassCurie.get(curie)
+      case (_, Some(className)) => classIdentityByClassName.get(className)
 
-  def getUMLClassIdentity(classCurie: UMLClassCurie): Option[UMLClassIdentity] =
-    classIdentityByClassCurie.get(classCurie)
+  def getUMLClassIdentity(identifier: UMLClassCurie | UMLClassName): Option[UMLClassIdentity] =
+    identifier match
+      case name: UMLClassName => classIdentityByClassName.get(name)
+      case curie: UMLClassCurie => classIdentityByClassCurie.get(curie)
 
-  /**
-   * Retrieve or build a class identity based on the identifier. This method is used when parsing, for example TSV
-   * files, where children of a class can be specified by either a name or a curie. Moreover, this method will create
-   * the class if it does not exist in the cache, thereby giving users the most flexibility.
-   *
-   * @param identifier
-   * @return
-   */
-  def retrieveOrBuildClassIdentity(identifier: String, prefixNamespace: PrefixNamespace): UMLClassIdentity = {
-    val classIdentityBuilder = ClassIdentityBuilder(prefixNamespace)
-    (UMLClassName(identifier), UMLClassCurie(identifier)) match
-      case (Some(name), _) =>
-        ClassIdentityBuilderCache.getUMLClassIdentity(name).getOrElse(
-          classIdentityBuilder.withName(identifier).build)
-      case (_, Some(curie)) =>
-        ClassIdentityBuilderCache.getUMLClassIdentity(curie).getOrElse(
-          classIdentityBuilder.withCurie(identifier).build)
-      case _ => throw new IllegalArgumentException(s"Name = '$identifier' is neither a curie nor a name.")
-  }
-
-
+  def getClassIdentityBuilder(classIdentity: UMLClassIdentity): ClassIdentityBuilder =
+    (classIdentity.curieOption, classIdentity.nameOption) match
+      case (Some(curie), Some(name)) => buildersByClassCurie.get(curie)
+        .getOrElse(buildersByClassName.get(name)
+          .getOrElse(UMLClassIdentity.builder(classIdentity.ontologyPrefix)))
+      case (Some(curie), None) => buildersByClassCurie.get(curie).getOrElse(
+        UMLClassIdentity.builder(classIdentity.ontologyPrefix))
+      case (None, Some(name)) => buildersByClassName.get(name).getOrElse(
+        UMLClassIdentity.builder(classIdentity.ontologyPrefix))
+      case (None, None) => throw new IllegalArgumentException("ClassIdentity must have a name or curie")
 
 object ClassBuilderCache:
   private val buildersByClassIdentity = scala.collection.mutable.Map[UMLClassIdentity, UMLClass.ClassBuilder]()
@@ -69,3 +62,10 @@ object ClassBuilderCache:
   def cacheUMLClass(umlClass: UMLClass, builder: UMLClass.ClassBuilder): Unit =
     buildersByClassIdentity += (umlClass.classIdentity -> builder)
     classesByClassIdentity += (umlClass.classIdentity -> umlClass)
+
+
+  def getUMLClass(classIdentity: UMLClassIdentity): Option[UMLClass] =
+    classesByClassIdentity.get(classIdentity)
+
+  def getUMLClassBuilder(classIdentity: UMLClassIdentity): Option[UMLClass.ClassBuilder] =
+    buildersByClassIdentity.get(classIdentity)

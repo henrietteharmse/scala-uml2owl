@@ -5,6 +5,7 @@ import org.uml2semantics.model.UMLGeneralizationSet.GeneralizationSetBuilder
 import org.uml2semantics.model.cache.{ClassBuilderCache, ClassIdentityBuilderCache}
 
 import scala.collection.immutable.HashSet
+import scala.collection.mutable
 
 sealed trait UMLClassIdentifier extends UMLNamedElement
 
@@ -99,15 +100,26 @@ object UMLGeneralizationSet:
   def builder(prefixNamespace: PrefixNamespace): GeneralizationSetBuilder =
     GeneralizationSetBuilder(prefixNamespace)
 
+  /**
+   *  According to the UML specification, the default values covering and disjoint are
+   *  incomplete and overlapping respectively.
+   *
+   * @param prefixNamespace
+   */
   class GeneralizationSetBuilder(var prefixNamespace: PrefixNamespace):
-    private var children: Set[UMLClassIdentity] = Set()
+    private var parent: Option[UMLClassIdentity] = None
+    private var children: scala.collection.mutable.Set[UMLClassIdentity] = scala.collection.mutable.HashSet()
     private var coveringConstraint: CoveringConstraint = CoveringConstraint.Incomplete
-    private var disjointConstraint: DisjointConstraint = DisjointConstraint.Disjoint
+    private var disjointConstraint: DisjointConstraint = DisjointConstraint.Overlapping
 
-    def withChildren(children: Set[String]): GeneralizationSetBuilder =
-      val builder = ClassIdentityBuilder(prefixNamespace)
-      this.children = children.map(child =>
-        builder.withNameOrCurie(child).build)
+    def withChildren(parent:String, children: Set[String]): GeneralizationSetBuilder =
+      this.parent = Some(ClassIdentityBuilderCache.getUMLClassIdentity(parent).getOrElse(
+        UMLClassIdentity.builder(prefixNamespace).withNameOrCurie(parent).build))
+      children.map(child =>
+        var childIdentity = ClassIdentityBuilderCache.getUMLClassIdentity(child).getOrElse(
+          UMLClassIdentity.builder(prefixNamespace).withNameOrCurie(child).build)
+        var childBuilder = ClassIdentityBuilderCache.getClassIdentityBuilder(childIdentity)
+        this.children += childBuilder.withNameOrCurie(child).build)
       this
     
     def withCoveringConstraint(coveringConstraint: CoveringConstraint): GeneralizationSetBuilder =
@@ -119,7 +131,7 @@ object UMLGeneralizationSet:
       this
 
     def build: UMLGeneralizationSet =
-      UMLGeneralizationSet(children, coveringConstraint, disjointConstraint)
+      UMLGeneralizationSet(children.toSet, coveringConstraint, disjointConstraint)
 
 case class UMLClassChildren(setOfGeneralizationSets: Set[UMLGeneralizationSet])
 
@@ -135,7 +147,8 @@ object UMLClass:
   class ClassBuilder(prefixNamespaceOption: PrefixNamespace):
     private var classIdentityBuilder = UMLClassIdentity.builder(prefixNamespaceOption)
     private var definition: Option[String] = None
-    private var children: Set[UMLGeneralizationSet.GeneralizationSetBuilder] = Set()
+    private var children: scala.collection.mutable.Set[UMLGeneralizationSet.GeneralizationSetBuilder] = 
+      scala.collection.mutable.HashSet()
 
     def withName(name: String): ClassBuilder =
       this.classIdentityBuilder = classIdentityBuilder.withName(name)
@@ -144,6 +157,10 @@ object UMLClass:
     def withCurie(curie: String): ClassBuilder =
       this.classIdentityBuilder = classIdentityBuilder.withCurie(curie)
       this
+      
+    def withNameOrCurie(nameOrCurie: String): ClassBuilder =
+      this.classIdentityBuilder = classIdentityBuilder.withNameOrCurie(nameOrCurie)
+      this  
 
     def withNameAndCurie(name: String, curie: String): ClassBuilder =
       if name.isEmpty && curie.isEmpty then
@@ -155,16 +172,14 @@ object UMLClass:
       this.definition = Some(definition)
       this
 
-    def withChildren(children: Set[String]): ClassBuilder =
+    def withChildren(parent: String, children: Set[String]): ClassBuilder =
       this.children += UMLGeneralizationSet.builder(prefixNamespaceOption)
-        .withChildren(children)
-        .withCoveringConstraint(CoveringConstraint.Complete)
-        .withDisjointConstraint(DisjointConstraint.Disjoint)
+        .withChildren(parent, children)
       this
 
-    def withChildren(children: Set[String], covering: CoveringConstraint, disjoint: DisjointConstraint): ClassBuilder =
+    def withChildren(parent: String, children: Set[String], covering: CoveringConstraint, disjoint: DisjointConstraint): ClassBuilder =
       this.children += UMLGeneralizationSet.builder(prefixNamespaceOption)
-        .withChildren(children)
+        .withChildren(parent, children)
         .withCoveringConstraint(covering)
         .withDisjointConstraint(disjoint)
       this
@@ -173,7 +188,7 @@ object UMLClass:
       val umlClass = UMLClass(
         classIdentityBuilder.build,
         UMLClassDefinition(definition),
-        UMLClassChildren(children.map(_.build))
+        UMLClassChildren(children.map(_.build).toSet)
       )
       ClassBuilderCache.cacheUMLClass(umlClass, this)
       umlClass
