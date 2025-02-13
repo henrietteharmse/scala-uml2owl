@@ -5,10 +5,13 @@ import org.uml2semantics.InputParameters
 import org.uml2semantics.Overrides.XMI
 import org.uml2semantics.inline.Code
 import org.uml2semantics.model.PrefixNamespace
-import org.uml2semantics.reader.TSVReader
+import org.uml2semantics.reader.{TSVReader, XMIReader}
 //import org.uml2semantics.reader.{TSVReader, XMIReader}
 import org.uml2semantics.owl.UML2OWLWriter
 import scopt.OParser
+
+// The cache import here is used for debugging purposes only
+import org.uml2semantics.model.cache.{ClassIdentityBuilderCache, ClassBuilderCache}
 
 import java.io.File
 
@@ -17,7 +20,6 @@ val argParser =
   import builder.*
   OParser.sequence(
     programName("uml2semantics"),
-    //    head("uml2owl","v0.0.1"),
     opt[Option[File]]('c', "classes")
       .valueName("<csv-classes-file>")
       .action((a, c) => c.copy(classesTsv = a))
@@ -76,32 +78,38 @@ val argParser =
       .action((a, c) => c.copy(prefixes = a))
       .text("A list of all the prefixes used in the UML class representation separated by commas."),
     opt[String]("overrides")
-      .valueName("<xmi-overrides-tsv> | <tsv-overrides-xmi>")
+      .valueName("<XMI> | <TSV>")
       .action((a, c) => c.copy(overrides = a))
       .text("Indicates whether the XMI file should be used to override the TSV file or vice versa. " +
-        "If not specified, the TSV file will be used to override the XMI file.")
-
+        "Use <XMI> to indicate that the XMI file should be used to override the TSV file " +
+        "and <TSV> to indicate that the TSV file should be used to override the XMI file. " +
+        "If not specified, the TSV file will be used to override the XMI file." +
+        "This configuration only applies when both an XMI file and a TSV file are provided.")
   )
 
 
 @main def uml2owl(arguments: String*): Unit =
   val logger = Logger[this.type]
-  logger.info("Start !!!!")
-//  logger.debug(s"arguments = $arguments ${Code.source}")
   val options = OParser.parse(argParser, arguments, InputParameters())
-  logger.debug(s"Work dammit!")
-  if options.isDefined then
-    logger.debug("Input is defined!")
-  else
-    logger.debug("Input is not defined")
   OParser.parse(argParser, arguments, InputParameters()) match
     case Some(input) =>
-      logger.debug(s"Some input ${Code.source}")
-//
+      logger.debug(s"Some input=$input at ${Code.source}")
+
       PrefixNamespace.cachePrefixes(input.prefixes)
       PrefixNamespace.cachePrefix(input.ontologyPrefix)
-      TSVReader.parseUMLClassDiagram(input)
 
+//      classesTsv: Option[File]
+//      attributesTsv: Option[File]
+//      enumerationsTsv: Option[File]
+//      enumerationValuesTsv: Option[File]
+//      xmiFile: Option[File]
+
+
+
+//      TSVReader.parseUMLClassDiagram(input)
+
+      XMIReader.parseUMLClassDiagram(input)
+      val k = 0
 //      val umlClassDiagram = if input.xmiFile.isDefined
 //      then
 //        XMIReader.parseUMLClassDiagram(input)

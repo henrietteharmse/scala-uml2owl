@@ -38,6 +38,7 @@ object ClassIdentityBuilderCache:
     (UMLClassCurie(name), UMLClassName(name)) match
       case (Some(curie), _) => classIdentityByClassCurie.get(curie)
       case (_, Some(className)) => classIdentityByClassName.get(className)
+      case _ => throw new IllegalArgumentException("Name and curie must not be empty.")
 
   def getUMLClassIdentity(identifier: UMLClassCurie | UMLClassName): Option[UMLClassIdentity] =
     identifier match

@@ -33,6 +33,18 @@ case class UMLClassIdentity(nameOption: Option[UMLClassName] = None,
 
 object UMLClassIdentity:
 
+  def apply(identifier: String, prefixNamespace: PrefixNamespace): UMLClassIdentity =
+    (UMLClassCurie(identifier), UMLClassName(identifier)) match 
+      case (Some(curie), _) => UMLClassIdentity(None, Some(curie), prefixNamespace)
+      case (_, Some(name)) => UMLClassIdentity(Some(name), None, prefixNamespace)
+      case _ => throw new IllegalArgumentException("Name and curie must not be empty.")
+
+  def apply(identifier: UMLClassIdentifier, prefixNamespace: PrefixNamespace): UMLClassIdentity =
+    identifier match 
+      case name: UMLClassName => UMLClassIdentity(Some(name), None, prefixNamespace)
+      case curie: UMLClassCurie => UMLClassIdentity(None, Some(curie), prefixNamespace)
+    
+
   def builder(prefixNamespace: PrefixNamespace): ClassIdentityBuilder =
     ClassIdentityBuilder(prefixNamespace)
 
@@ -92,6 +104,10 @@ enum DisjointConstraint:
   case Disjoint
   case Overlapping
 
+
+/**
+ * @Todo: Add support for generalizationSet name.
+ */
 case class UMLGeneralizationSet(generalizationSet: Set[UMLClassIdentity],
                                 coveringConstraint: CoveringConstraint = CoveringConstraint.Incomplete,
                                 disjointConstraint: DisjointConstraint = DisjointConstraint.Disjoint)
@@ -147,7 +163,7 @@ object UMLClass:
   class ClassBuilder(prefixNamespaceOption: PrefixNamespace):
     private var classIdentityBuilder = UMLClassIdentity.builder(prefixNamespaceOption)
     private var definition: Option[String] = None
-    private var children: scala.collection.mutable.Set[UMLGeneralizationSet.GeneralizationSetBuilder] = 
+    private var children: scala.collection.mutable.Set[UMLGeneralizationSet.GeneralizationSetBuilder] =
       scala.collection.mutable.HashSet()
 
     def withName(name: String): ClassBuilder =
@@ -157,10 +173,10 @@ object UMLClass:
     def withCurie(curie: String): ClassBuilder =
       this.classIdentityBuilder = classIdentityBuilder.withCurie(curie)
       this
-      
+
     def withNameOrCurie(nameOrCurie: String): ClassBuilder =
       this.classIdentityBuilder = classIdentityBuilder.withNameOrCurie(nameOrCurie)
-      this  
+      this
 
     def withNameAndCurie(name: String, curie: String): ClassBuilder =
       if name.isEmpty && curie.isEmpty then

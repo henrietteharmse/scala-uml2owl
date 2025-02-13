@@ -3,116 +3,87 @@ package org.uml2semantics.reader
 import com.typesafe.scalalogging.Logger
 import org.uml2semantics.InputParameters
 import org.uml2semantics.inline.Code
-import org.uml2semantics.model.{PrefixNamespace, UMLClassName}
+import org.uml2semantics.model.*
+import org.uml2semantics.reader.ReaderHelper.populateParentsWithTheirChildren
 import org.w3c.dom.{Document, Node, NodeList}
 
-import scala.jdk.CollectionConverters.*
-import java.io.File
-import scala.collection.{immutable, mutable}
-import sourcecode.Text.generate
-
 import java.util
-import java.util.Collections
 import java.util.stream.{Collectors, IntStream}
-import javax.management.Query
-import javax.xml.namespace.QName
-import javax.xml.parsers.{DocumentBuilder, DocumentBuilderFactory}
-import javax.xml.xpath.{XPath, XPathConstants, XPathExpression, XPathExpressionException, XPathFactory, XPathFunction, XPathFunctionException, XPathFunctionResolver}
+import javax.xml.parsers.DocumentBuilderFactory
+import javax.xml.xpath.*
+import scala.collection.{immutable, mutable}
+import scala.jdk.CollectionConverters.*
 
-object XMIReader:
-  
-//  private def parseClasses(ontologyPrefix: PrefixNamespace, xPath: XPath, xmiDocument: Document): Unit = {
-//    val UMLClassesQuery: String = "//element[@type='uml:Class']"
-//    val classNodes: Seq[Node] = executeXPathQuery(xPath, xmiDocument, UMLClassesQuery)
-//    
-//    val DocumentationQuery: String = "properties/@documentation"
-//    
-//    for classNode <- classNodes do {
-//      // @Todo: This currently does not support curies. Ideally we would support both curies and names.
-//      val className: String = classNode.getAttributes.getNamedItem("name").getNodeValue
-//      val umlClassName = UMLClassName(className)
-//
-//      val classDefinition = executeXPathQuery(xPath, classNode, DocumentationQuery)
-//      val parents: Set[String] = extractParents(xPath, xmiDocument, classNode)
-//
-//      val umlClass: UMLClass = UMLClass(
-//        UMLClassIdentity(className = umlClassName, ontologyPrefix = ontologyPrefix),
-//        UMLClassDefinition(classDefinition)
-//      )
-//      parentsByClassIdentityMap += umlClass.classIdentity -> parents
-//
-//      //      val attributes = extractAttributes(xPath, xmiDocument, umlClassName)
-//
-//      umlClassesMap += umlClassName -> umlClass
-//    }
-//
-//    for (umlClassName, umlClass) <- umlClassesMap do {
-//      val parents = parentsByClassIdentityMap(umlClass.classIdentity)
-//      val classParentIds = UMLClassParentNamedElements(parents)
-//      // @todo: Here we need to copy parentIds into the UMLClass, because we do not read classes in an order
-//      // that will ensure that parent classes are read before their children. We may be better off using a
-//      // Builder pattern to ensure instances are created with all necessary data.
-//      val updatedUmlClass = umlClass.copy(classParentIds = classParentIds)
-//      umlClassesMap.update(umlClassName, updatedUmlClass)
-//    }
-//
-//    XMIClasses(classNodes, UMLClassesMap(umlClassesMap.toMap))
-//  }
+object XMIReader extends UMLClassDiagramReader :
+  val logger = Logger("XMIReader")
 
+  override def parseUMLClassDiagram(input: InputParameters): Unit =
+    logger.debug(s"start xmi parsing ${Code.source}")
+    val ontologyPrefix = PrefixNamespace(input.ontologyPrefix)
+    val xmiDocument = DocumentBuilderFactory.newInstance.newDocumentBuilder.parse(input.xmiFile.get)
+    parseClasses(ontologyPrefix, XPathFactory.newInstance.newXPath, xmiDocument)
 
+  private def parseClasses(ontologyPrefix: PrefixNamespace, xPath: XPath, xmiDocument: Document): Unit =
+    val classNodes = executeXPathQuery(xPath, xmiDocument, "//packagedElement[@type='uml:Class']")
+    val parentToChildrenMap = mutable.Map[String, mutable.Set[String]]()
 
-//  private def extractParents(xPath: XPath, xmiDocument: Document, classNode: Node): immutable.Set[String] = {
-//    val logger = Logger("extractParents")
-//    val ParentsGeneralizationEndQuery: String = "links/Generalization/@end"
-//    val idref: String = executeXPathQuery(xPath, classNode, ParentsGeneralizationEndQuery)
-//
-//    logger.debug(s"idref = ${idref}")
-//    val parents: mutable.Set[String] = mutable.Set[String]()
-//    if !idref.isBlank then
-//      val ParentsByIdrefQuery = s"//element[@idref='$idref']/@name"
-//      val parentNodes = executeXPathQuery(xPath, xmiDocument, ParentsByIdrefQuery)
-//      for parentNode <- parentNodes do
-//        parents += parentNode.getNodeValue
-//
-//    logger.debug(s"parents = ${parents}")
-//    parents.toSet
-//  }
+    for classNode <- classNodes do
+      val classIdentifier = classNode.getAttributes.getNamedItem("name").getNodeValue
+      val parentSet = extractParents(xPath, xmiDocument, classNode)
+      if parentSet.nonEmpty then
+        parentSet.foreach(parent =>
+          parentToChildrenMap.getOrElseUpdate(parent, mutable.HashSet()) += classIdentifier)
+      val definition= extractDefintion(xPath, xmiDocument, classNode, classIdentifier)
+      var classBuilder = UMLClass.builder(ontologyPrefix)
+        .withNameOrCurie(classIdentifier)
+      if definition.nonEmpty then
+        classBuilder = classBuilder.withDefinition(definition)
+      classBuilder.build
+
+    populateParentsWithTheirChildren(parentToChildrenMap, ontologyPrefix)
+
+  private def extractDefintion(xPath: XPath, xmiDocument: Document,
+                                   classNode: Node, classIdentifier: String): String =
+    val classId = classNode.getAttributes.getNamedItem("xmi:id").getNodeValue
+    val classProperties = executeXPathQuery(xPath, xmiDocument,
+      s"//element[@idref='$classId' and @type='uml:Class' and @name='$classIdentifier']/properties")
+    val definition = StringBuilder()
+    classProperties.foreach { propertiesNode =>
+      val definitionNode = propertiesNode.getAttributes.getNamedItem("documentation")
+      if definitionNode != null then
+        definition.append(definitionNode.getNodeValue)
+    }
+    definition.toString()
 
 
-  private def executeXPathQuery(xPath: XPath, document: Document, query: String): Seq[Node] =
-    nodeListToSeq(xPath.compile(query)
-      .evaluate(document, XPathConstants.NODESET)
-      .asInstanceOf[NodeList])
-  
-  private def executeXPathQueryAsNodeList(xPath: XPath, document: Document, query: String): NodeList =
-    val logger = Logger("executeXPathQuery")
-    logger.debug(s"Executing XPath query on document: query=$query")
-    xPath.compile(query)
-      .evaluate(document, XPathConstants.NODESET)
+  def extractParents(xPath: XPath, document: Document, classNode: Node): mutable.Set[String] =
+    val generalizationNodes = executeXPathQueryAsNodeList(xPath, classNode, "generalization")
+    val parentIds = (0 until generalizationNodes.getLength).map(i =>
+      generalizationNodes.item(i).getAttributes.getNamedItem("general").getNodeValue)
+      .to(mutable.Set)
+    parentIds.flatMap { parentId =>
+      val parentNodeList = executeXPathQueryAsNodeList(xPath, document, s"//packagedElement[@id='$parentId' and @type='uml:Class']")
+      if parentNodeList.getLength > 0 then
+        Option(parentNodeList.item(0).getAttributes.getNamedItem("name")).map(_.getNodeValue)
+      else None
+    }
+
+  private def executeXPathQueryAsNodeList(xPath: XPath, node: Node, query: String): NodeList =
+    xPath
+      .compile(query)
+      .evaluate(node, XPathConstants.NODESET)
       .asInstanceOf[NodeList]
 
-  private def executeXPathQuery(xPath: XPath, node: Node, query: String): String =
-    xPath.compile(query).evaluate(node)
-  
-  private def executeXPathQuery(xPath: XPath, nodeList: NodeList, query: String): String =
-    val logger = Logger("executeXPathQuery")
-    logger.debug(s"Executing XPath query on nodeList: query=$query")
-  
-    val results: Seq[String] = for {
-      i <- 0 until nodeList.getLength
-      node = nodeList.item(i)
-    } yield xPath.compile(query).evaluate(node)
-  
-    logger.debug(s"results.size = ${results.size}")
-    results.foreach(result => logger.debug(result))
-  
-    results.head
-  
-  
+  private def executeXPathQuery(xPath: XPath, document: Document, query: String): Seq[Node] =
+    nodeListToSeq(xPath
+      .compile(query)
+      .evaluate(document, XPathConstants.NODESET)
+      .asInstanceOf[NodeList])
+
   private def nodeListToSeq(nodeList: NodeList): Seq[Node] =
-    IntStream.range(0, nodeList.getLength())
+    IntStream
+      .range(0, nodeList.getLength)
       .mapToObj(nodeList.item)
       .collect(Collectors.toList)
       .asScala
       .toSeq
-
